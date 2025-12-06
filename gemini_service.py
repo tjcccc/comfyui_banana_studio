@@ -1,12 +1,54 @@
-import os
-import json
+import copy
+import time
 from typing import Optional, List, Dict, Any
 import requests
-from PIL import Image
 
 
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 models = ["gemini-2.5-flash-image", "gemini-3-pro-image-preview"]
+
+
+def strip_useless_data(obj):
+    """
+    Recursively remove base64 image data and thoughtSignature data from Gemini response JSON.
+    Keeps inlineData.mimeType but clears inlineData.data.
+    """
+    if isinstance(obj, dict):
+        new_obj = {}
+        for k, v in obj.items():
+            if k == "inlineData":
+                # Keep mimeType but drop base64 data
+                new_obj["inlineData"] = {
+                    "mimeType": v.get("mimeType", "")
+                }
+            elif k == "thoughtSignature":
+                new_obj["thoughtSignature"] = "(removed)"
+            else:
+                new_obj[k] = strip_useless_data(v)
+        return new_obj
+
+    if isinstance(obj, list):
+        return [strip_useless_data(x) for x in obj]
+
+    return obj
+
+
+def save_json_debug(data, prefix="gemini"):
+    import json, os, time
+
+    log_dir = os.path.dirname(__file__)
+    os.makedirs(log_dir, exist_ok=True)
+
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    filename = f"{prefix}_{timestamp}.json"
+
+    path = os.path.join(log_dir, filename)
+
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+    print(f"[BananaStudio] Saved JSON: {path}")
+
 
 
 def send_request_to_gemini(
@@ -21,6 +63,9 @@ def send_request_to_gemini(
     seed: int = -1,
     proxy: Optional[str] = None,
 ) -> Dict[str, Any]:
+    max_retries = 5
+    delay = 2.0
+
     if model not in models:
         raise ValueError(f"{model} is not a valid model")
 
@@ -97,23 +142,72 @@ def send_request_to_gemini(
             "https": proxy,
         }
 
-    response = requests.post(api_url, headers=headers, json=body, timeout=180, proxies=proxies)
-    response.raise_for_status()
-    return response.json()
+    for attempt in range(max_retries):
+        response = requests.post(api_url, headers=headers, json=body, timeout=(10, 90), proxies=proxies)
+        if response.status_code == 503:
+            print(f"Gemini 503, maybe model overloaded, retry {attempt + 1} / {max_retries}...")
+            if attempt < max_retries - 1:
+                time.sleep(delay)
+                delay = min(delay * 2, 20)
+                continue
+        if not response.ok:
+            print("Gemini error response:", response.text)
+            response.raise_for_status()
+
+        # debug
+        clean_json = copy.deepcopy(response.json())
+        clean_json = strip_useless_data(clean_json)
+        save_json_debug(clean_json)
+
+        return response.json()
+
+    return {}
 
 
 def parse_gemini_response(response_json):
     images = []
     texts = []
 
-    for candidate in response_json.get("candidates", []):
+    candidates = response_json.get("candidates", [])
+
+    for candidate in candidates:
         parts = candidate.get("content", {}).get("parts", [])
         for part in parts:
-            if "text" in part:
-                texts.append(part["text"])
+            text_content = part.get("text")
+            if isinstance(text_content, str):
+                texts.append(text_content)
             if "inlineData" in part:
                 images.append(part["inlineData"]["data"])
 
-    formated_texts = "\n".join(texts)
+    lines = []
 
-    return images, formated_texts
+    if images:
+        lines.append("Image(s) generated successfully.")
+    else:
+        lines.append("No images return from Gemini.")
+
+    usage = response_json.get("usageMetadata", {})
+    if usage:
+        prompt_token_count = usage.get("promptTokenCount")
+        candidates_token_count = usage.get("candidatesTokenCount")
+        thoughts_token_count = usage.get("thoughtsTokenCount")
+        total_token_count = usage.get("totalTokenCount")
+
+        tokens_lines = []
+        if prompt_token_count is not None:
+            tokens_lines.append(f"- prompt token: {prompt_token_count}")
+        if candidates_token_count is not None:
+            tokens_lines.append(f"- candidates token: {candidates_token_count}")
+        if thoughts_token_count is not None:
+            tokens_lines.append(f"- thoughts token: {thoughts_token_count}")
+        if total_token_count is not None:
+            tokens_lines.append(f"- total tokens: {total_token_count}")
+
+        if tokens_lines:
+            tokens_lines_str = "\n".join(tokens_lines)
+            lines.append(f"Tokens count:\n{tokens_lines_str}")
+
+    formatted_texts = "\n".join(lines)
+    return images, formatted_texts
+
+

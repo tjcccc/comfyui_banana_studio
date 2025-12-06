@@ -1,4 +1,5 @@
-from typing import List, Tuple, Optional
+import random
+from typing import Tuple, Optional
 import torch
 from .image_service import prepare_images_for_api, get_image_from_base64_to_tensor
 from .gemini_service import send_request_to_gemini, parse_gemini_response
@@ -86,7 +87,6 @@ class BananaStudio:
         api_key = "",
         model = "gemini-3-pro-image-preview",
         prompt: Optional[str] = None,
-        batch_size = 1,
         aspect_ratio = "Auto",
         resolution = "1K",
         temperature:float = -1.0,
@@ -101,8 +101,8 @@ class BananaStudio:
         proxy: Optional[str] = None,
     ) -> Tuple[Optional[torch.Tensor], str]:
         encoded_inline_images = prepare_images_for_api(image_1, image_2, image_3, image_4, image_5, image_6)
-        response = send_request_to_gemini(api_key, model, prompt, encoded_inline_images, aspect_ratio, resolution, temperature, top_p, seed, proxy)
-        base64_images, text_output = parse_gemini_response(response)
+        response_json = send_request_to_gemini(api_key, model, prompt, encoded_inline_images, aspect_ratio, resolution, temperature, top_p, seed, proxy)
+        base64_images, text_output = parse_gemini_response(response_json)
 
         if not base64_images:
             return None, f"No images returned from model {model}. Text output: \n{text_output}"
@@ -130,12 +130,35 @@ class BananaStudio:
         image_5: Optional[torch.Tensor] = None,
         image_6: Optional[torch.Tensor] = None,
         proxy: Optional[str] = None,
-    ) -> Tuple[Optional[torch.Tensor], str]:
+    ) -> Tuple[Optional[torch.Tensor], str] | None:
         if self.has_no_prompt_and_images(prompt, image_1, image_2, image_3, image_4, image_5, image_6):
             return None, "No prompt and images for generating."
         if batch_size == 1:
-            return self.generate_single_image(api_key, model, prompt, batch_size, aspect_ratio, resolution, temperature, top_p, seed, image_1, image_2, image_3, image_4, image_5, image_6, proxy)
+            return self.generate_single_image(api_key, model, prompt, aspect_ratio, resolution, temperature, top_p, seed, image_1, image_2, image_3, image_4, image_5, image_6, proxy)
 
-        # TODO: batch call
-        return self.generate_single_image(api_key, model, prompt, batch_size, aspect_ratio, resolution, temperature, top_p, seed, image_1, image_2, image_3, image_4, image_5, image_6, proxy)
+        if seed is None or seed < 0:
+            base_seed = random.randint(1, 102400)
+        else:
+            base_seed = int(seed)
+
+        all_images: list[torch.Tensor] = []
+        last_log: str = ""
+
+        for i in range(batch_size):
+            current_seed = base_seed + i
+            image_tensor, log_text = self.generate_single_image(api_key, model, prompt, aspect_ratio, resolution, temperature, top_p, seed, image_1, image_2, image_3, image_4, image_5, image_6, proxy)
+            last_log = log_text
+            all_images.append(image_tensor)
+
+        if not all_images:
+            return None, "Failed to generate any images. Last response:\n{last_log}}"
+
+        batched_images = torch.cat(all_images, dim=0)
+
+        final_log = (
+            f"Generated {batched_images.shape[0]} image(s). "
+            f"Last call log:\n{last_log}"
+        )
+
+        return batched_images, final_log
 
