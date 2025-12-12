@@ -4,16 +4,21 @@ from aiohttp import web
 import folder_paths
 import nodes
 from .banana_studio import BananaStudio
+from .single_parameter_dispatcher import SingleParameterDispatcher
 
 NODE_CLASS_MAPPINGS = {
     "BananaStudio": BananaStudio,
+    "SingleParameterDispatcher": SingleParameterDispatcher,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
     "BananaStudio": "Banana Studio",
+    "SingleParameterDispatcher": "Single Parameter Dispatcher",
 }
+WEB_DIRECTORY = "./js"
 __all__ = [
     "NODE_CLASS_MAPPINGS",
     "NODE_DISPLAY_NAME_MAPPINGS",
+    "WEB_DIRECTORY",
 ]
 
 # Define the path to our extension

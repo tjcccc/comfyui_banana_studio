@@ -143,7 +143,7 @@ def send_request_to_gemini(
         }
 
     for attempt in range(max_retries):
-        response = requests.post(api_url, headers=headers, json=body, timeout=(10, 90), proxies=proxies)
+        response = requests.post(api_url, headers=headers, json=body, timeout=(10, 180), proxies=proxies)
         if response.status_code == 503:
             print(f"Gemini 503, maybe model overloaded, retry {attempt + 1} / {max_retries}...")
             if attempt < max_retries - 1:
@@ -155,9 +155,9 @@ def send_request_to_gemini(
             response.raise_for_status()
 
         # debug
-        clean_json = copy.deepcopy(response.json())
-        clean_json = strip_useless_data(clean_json)
-        save_json_debug(clean_json)
+        # clean_json = copy.deepcopy(response.json())
+        # clean_json = strip_useless_data(clean_json)
+        # save_json_debug(clean_json)
 
         return response.json()
 
