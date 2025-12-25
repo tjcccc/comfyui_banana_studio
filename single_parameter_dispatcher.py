@@ -23,6 +23,13 @@ class SingleParameterDispatcher:
                     "default": 0,
                     "step": 1,
                 }),
+                "reset_mark": ("INT", {
+                    "default": 0,
+                    "step": 1,
+                }),
+                "output_tag_format": ("STRING", {
+                    "default": "",
+                })
             },
             "hidden": {
                 "unique_id": "UNIQUE_ID",
@@ -31,8 +38,8 @@ class SingleParameterDispatcher:
 
     _STATE = {}
 
-    RETURN_TYPES = ("FLOAT", "INT","STRING")
-    RETURN_NAMES = ("dispatch_value", "index", "log")
+    RETURN_TYPES = ("FLOAT", "STRING", "STRING", "STRING")
+    RETURN_NAMES = ("dispatch_value", "index", "output_tag", "log")
 
     FUNCTION = "run"
 
@@ -62,11 +69,12 @@ class SingleParameterDispatcher:
         return queue
 
 
-    def run(self, value, delta, max_value, batch, unique_id=None) -> Tuple[float, int, str]:
+    def run(self, value, delta, max_value, batch, reset_mark, output_tag_format, unique_id=None) -> Tuple[float, str, str, str]:
         value: float = float(value)
         delta: float = float(delta)
         max_value: float = float(max_value)
         batch: int = int(batch)
+        reset_mark: int = int(reset_mark)
 
         key = unique_id or "global"
 
@@ -77,6 +85,7 @@ class SingleParameterDispatcher:
             "last_delta": None,
             "last_max": None,
             "last_batch": None,
+            "last_reset_mark": None,
         })
 
         params_changed = (
@@ -84,6 +93,7 @@ class SingleParameterDispatcher:
             or state["last_delta"] != delta
             or state["last_max"] != max_value
             or state["last_batch"] != batch
+            or state["last_reset_mark"] != reset_mark
         )
 
         if params_changed or not state["queue"]:
@@ -93,6 +103,7 @@ class SingleParameterDispatcher:
             state["last_delta"] = delta
             state["last_max"] = max_value
             state["last_batch"] = batch
+            state["last_reset_mark"] = reset_mark
 
         if state["queue"]:
             current_value = state["queue"].pop(0)
@@ -103,6 +114,23 @@ class SingleParameterDispatcher:
         state["index"] = current_index + 1
         self._STATE[key] = state
 
+        output_current_value_mark = "%current_value%"
+        output_current_index_mark = "%index%"
+        output_delta_mark = "%delta%"
+        output_max_mark = "%max%"
+        output_batch_mark = "%batch%"
+
+        output_tag_replacements = {
+            output_current_value_mark: str(current_value),
+            output_current_index_mark: str(current_index + 1),
+            output_delta_mark: str(delta),
+            output_max_mark: str(max_value),
+            output_batch_mark: str(batch),
+        }
+        output_tag = output_tag_format
+        for old, new in output_tag_replacements.items():
+            output_tag = output_tag.replace(old, new)
+
         log = (
             f"[SingleParameterDispatcher]\n"
             f"batch_index={current_index + 1}/{batch}, current value={current_value}\n"
@@ -110,4 +138,4 @@ class SingleParameterDispatcher:
         )
         print(log)
 
-        return float(current_value), int(current_index + 1), log
+        return float(current_value), str(current_index + 1), output_tag, log

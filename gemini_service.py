@@ -205,7 +205,7 @@ def parse_gemini_response(response_json):
 
         if tokens_lines:
             tokens_lines_str = "\n".join(tokens_lines)
-            lines.append(f"Tokens count:\n{tokens_lines_str}")
+            lines.append(f"\nTokens count:\n{tokens_lines_str}")
 
     formatted_texts = "\n".join(lines)
     return images, formatted_texts
