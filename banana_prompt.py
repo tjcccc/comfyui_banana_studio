@@ -11,10 +11,15 @@ class BananaPrompt:
                 })
             },
             "optional": {
-                "subject_or_identity": ("STRING", {
+                "identify_reference": ("STRING", {
                     "default": "",
                     "multiline": True,
-                    "tooltip": "Subject / Identity\nWho the subject is; identity and consistency."
+                    "tooltip": "Identify Reference\nDefines the immutable facial identity anchor to ensure consistent character appearance across all generations."
+                }),
+                "subject_or_presence": ("STRING", {
+                    "default": "",
+                    "multiline": True,
+                    "tooltip": "Subject / Identity\nDescribes how the subject emotionally, aesthetically, and physically occupies the frame in this specific moment."
                 }),
                 "action_or_state": ("STRING", {
                     "default": "",
@@ -48,12 +53,13 @@ class BananaPrompt:
     CATEGORY = "Banana Studio"
 
 
-    def make_banana_prompt(self, medium_or_tech, subject_or_identity="", action_or_state="", environment="", clothing_body="", final_style=""):
+    def make_banana_prompt(self, medium_or_tech, identify_reference="", subject_or_presence="", action_or_state="", environment="", clothing_body="", final_style=""):
 
         has_multiple_sections = any(
             s.strip()
             for s in (
-                subject_or_identity,
+                identify_reference,
+                subject_or_presence,
                 action_or_state,
                 environment,
                 clothing_body,
@@ -74,7 +80,8 @@ class BananaPrompt:
         medium_or_tech = (medium_or_tech or "").strip()
         if medium_or_tech:
             add_section(prompt_sections, "Medium / Tech", medium_or_tech)
-        add_section(prompt_sections, "Subject / Identity", subject_or_identity)
+        add_section(prompt_sections, "Identify Reference", identify_reference)
+        add_section(prompt_sections, "Subject / Presence", subject_or_presence)
         add_section(prompt_sections, "Action / State", action_or_state)
         add_section(prompt_sections, "Environment", environment)
         add_section(prompt_sections, "Clothing / Body", clothing_body)
