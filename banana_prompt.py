@@ -19,7 +19,7 @@ class BananaPrompt:
                 "subject_or_presence": ("STRING", {
                     "default": "",
                     "multiline": True,
-                    "tooltip": "Subject / Identity\nDescribes how the subject emotionally, aesthetically, and physically occupies the frame in this specific moment."
+                    "tooltip": "Subject / Presence\nDescribes how the subject emotionally, aesthetically, and physically occupies the frame in this specific moment."
                 }),
                 "action_or_state": ("STRING", {
                     "default": "",
