@@ -8,6 +8,8 @@ from .single_parameter_dispatcher import SingleParameterDispatcher
 from .string_concat import StringConcat
 from .banana_prompt import BananaPrompt
 from .zimage_prompt import ZImagePrompt
+from .prompt_editor import PromptEditor
+
 
 NODE_CLASS_MAPPINGS = {
     "BananaStudio": BananaStudio,
@@ -15,6 +17,7 @@ NODE_CLASS_MAPPINGS = {
     "StringConcat": StringConcat,
     "BananaPrompt": BananaPrompt,
     "ZImagePrompt": ZImagePrompt,
+    "PromptEditor": PromptEditor,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
     "BananaStudio": "Banana Studio",
@@ -22,6 +25,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "StringConcat": "String Concat",
     "BananaPrompt": "Banana Prompt",
     "ZImagePrompt": "Z-Image Prompt",
+    "PromptEditor": "Prompt Editor",
 }
 WEB_DIRECTORY = "./js"
 __all__ = [
