@@ -14,7 +14,7 @@ class BananaStudio:
                     "multiline": False,
                     "default": "",
                 }),
-                "model": (["gemini-2.5-flash-image", "gemini-3-pro-image-preview"], {
+                "model": (["gemini-3.1-flash-image-preview", "gemini-3-pro-image-preview", "gemini-2.5-flash-image"], {
                     "default": "gemini-3-pro-image-preview",
                 }),
                 "prompt": ("STRING", {
@@ -26,14 +26,15 @@ class BananaStudio:
                     "min": 1,
                     "max": 8,
                 }),
-                "aspect_ratio": (["Auto", "1:1", "9:16", "16:9", "3:4", "4:3", "3:2", "2:3", "5:4", "4:5", "21:9"], {
+                "aspect_ratio": (["Auto", "1:1", "9:16", "16:9", "3:4", "4:3", "3:2", "2:3", "5:4", "4:5", "21:9", "4:1", "1:4", "8:1", "1:8"], {
                     "default": "Auto",
+                    "tooltip": "Only for gemini-3-pro-image-preview. 4:1, 1:4, 8:1, and 1:8 are only for gemini-3.1-flash-image-preview."
                 }),
             },
             "optional": {
-                "resolution": (["1K", "2K", "4K"], {
+                "resolution": (["512", "1K", "2K", "4K"], {
                     "default": "1K",
-                    "tooltip": "Only for gemini-3-pro-image-preview."
+                    "tooltip": "Only for gemini-3-pro-image-preview. 512 is only for gemini-3.1-flash-image-preview."
                 }),
                 "temperature": ("FLOAT", {
                     "default": 0.5,
@@ -47,6 +48,10 @@ class BananaStudio:
                     "min": 0.0,
                     "max": 1.0,
                     "step": 0.01,
+                }),
+                "thinking_level": (["Minimal", "High"], {
+                    "default": "Minimal",
+                    "tooltip": "Only for gemini-3.1-flash-image-preview. It controls how much the model thinks before generating images. High thinking level may lead to better quality but longer generation time."
                 }),
                 "seed": ("INT", {
                     "default": -1,
@@ -91,6 +96,7 @@ class BananaStudio:
         resolution = "1K",
         temperature:float = -1.0,
         top_p = 0.95,
+        thinking_level = "Minimal",
         seed = -1,
         image_1: Optional[torch.Tensor] = None,
         image_2: Optional[torch.Tensor] = None,
@@ -101,7 +107,7 @@ class BananaStudio:
         proxy: Optional[str] = None,
     ) -> Tuple[Optional[torch.Tensor], str]:
         encoded_inline_images = prepare_images_for_api(image_1, image_2, image_3, image_4, image_5, image_6)
-        response_json = send_request_to_gemini(api_key, model, prompt, encoded_inline_images, aspect_ratio, resolution, temperature, top_p, seed, proxy)
+        response_json = send_request_to_gemini(api_key, model, prompt, encoded_inline_images, aspect_ratio, resolution, temperature, top_p, thinking_level, seed, proxy)
         base64_images, text_output = parse_gemini_response(response_json)
 
         if not base64_images:
@@ -122,6 +128,7 @@ class BananaStudio:
         resolution = "1K",
         temperature = 0.5,
         top_p = 0.95,
+        thinking_level = "Minimal",
         seed = -1,
         image_1: Optional[torch.Tensor] = None,
         image_2: Optional[torch.Tensor] = None,
@@ -134,7 +141,7 @@ class BananaStudio:
         if self.has_no_prompt_and_images(prompt, image_1, image_2, image_3, image_4, image_5, image_6):
             return None, "No prompt and images for generating."
         if batch_size == 1:
-            return self.generate_single_image(api_key, model, prompt, aspect_ratio, resolution, temperature, top_p, seed, image_1, image_2, image_3, image_4, image_5, image_6, proxy)
+            return self.generate_single_image(api_key, model, prompt, aspect_ratio, resolution, temperature, top_p, thinking_level, seed, image_1, image_2, image_3, image_4, image_5, image_6, proxy)
 
         if seed is None or seed < 0:
             base_seed = random.randint(1, 102400)
@@ -146,7 +153,7 @@ class BananaStudio:
 
         for i in range(batch_size):
             current_seed = base_seed + i
-            image_tensor, log_text = self.generate_single_image(api_key, model, prompt, aspect_ratio, resolution, temperature, top_p, seed, image_1, image_2, image_3, image_4, image_5, image_6, proxy)
+            image_tensor, log_text = self.generate_single_image(api_key, model, prompt, aspect_ratio, resolution, temperature, top_p, thinking_level, current_seed, image_1, image_2, image_3, image_4, image_5, image_6, proxy)
             last_log = log_text
             all_images.append(image_tensor)
 

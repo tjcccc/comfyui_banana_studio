@@ -1,11 +1,12 @@
 import copy
 import time
+from datetime import datetime
 from typing import Optional, List, Dict, Any
 import requests
 
 
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-models = ["gemini-2.5-flash-image", "gemini-3-pro-image-preview"]
+models = ["gemini-3.1-flash-image-preview", "gemini-3-pro-image-preview", "gemini-2.5-flash-image"]
 
 
 def strip_useless_data(obj):
@@ -60,6 +61,7 @@ def send_request_to_gemini(
     resolution: str = "1K",
     temperature: float = 0.5,
     top_p: float = 0.95,
+    thinking_level: str = "Minimal",
     seed: int = -1,
     proxy: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -100,6 +102,7 @@ def send_request_to_gemini(
     # TODO: Thinking?
 
     image_config: Dict[str, str] = {}
+    thinking_config: Dict[str, str] = {}
 
     if aspect_ratio != "Auto":
         image_config.update({
@@ -113,6 +116,13 @@ def send_request_to_gemini(
 
     if image_config:
         generation_config["image_config"] = image_config
+
+    if model == "gemini-3.1-flash-image-preview":
+        thinking_config = {
+            "thinking_level": thinking_level,
+            "include_thoughts": False
+        }
+        generation_config["thinking_config"] = thinking_config
 
     body = {
         "contents": [
@@ -143,6 +153,7 @@ def send_request_to_gemini(
         }
 
     for attempt in range(max_retries):
+        print(f"Request time: {datetime.now()}")
         response = requests.post(api_url, headers=headers, json=body, timeout=(10, 180), proxies=proxies)
         if response.status_code == 503:
             print(f"Gemini 503, maybe model overloaded, retry {attempt + 1} / {max_retries}...")
@@ -159,6 +170,7 @@ def send_request_to_gemini(
         # clean_json = strip_useless_data(clean_json)
         # save_json_debug(clean_json)
 
+        print(f"Response time: {datetime.now()}")
         return response.json()
 
     return {}
