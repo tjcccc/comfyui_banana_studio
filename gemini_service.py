@@ -83,12 +83,12 @@ def send_request_to_gemini(
             if not encoded_inline_image:
                 continue
             parts.append({
-                "inlineData": encoded_inline_image
+                "inline_data": encoded_inline_image
             })
 
     generation_config: Dict[str, Any] = {
-        "topP": float(top_p),
-        "responseModalities": ["TEXT", "IMAGE"],
+        "top_p": float(top_p),
+        "response_modalities": ["TEXT", "IMAGE"],
     }
 
     if temperature >= 0:
@@ -99,19 +99,16 @@ def send_request_to_gemini(
     if seed >= 0:
         generation_config["seed"] = seed
 
-    # TODO: Thinking?
-
     image_config: Dict[str, str] = {}
-    thinking_config: Dict[str, str] = {}
 
     if aspect_ratio != "Auto":
         image_config.update({
-            "aspectRatio": aspect_ratio
+            "aspect_ratio": aspect_ratio
         })
 
-    if model == "gemini-3-pro-image-preview":
+    if model == "gemini-3-pro-image-preview" or model == "gemini-3.1-flash-image-preview":
         image_config.update({
-            "imageSize": resolution
+            "image_size": resolution
         })
 
     if image_config:
