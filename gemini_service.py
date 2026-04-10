@@ -87,8 +87,8 @@ def send_request_to_gemini(
             })
 
     generation_config: Dict[str, Any] = {
-        "top_p": float(top_p),
-        "response_modalities": ["TEXT", "IMAGE"],
+        "topP": float(top_p),
+        "responseModalities": ["TEXT", "IMAGE"],
     }
 
     if temperature >= 0:
@@ -103,23 +103,23 @@ def send_request_to_gemini(
 
     if aspect_ratio != "Auto":
         image_config.update({
-            "aspect_ratio": aspect_ratio
+            "aspectRatio": aspect_ratio
         })
 
     if model == "gemini-3-pro-image-preview" or model == "gemini-3.1-flash-image-preview":
         image_config.update({
-            "image_size": resolution
+            "imageSize": resolution
         })
 
     if image_config:
-        generation_config["image_config"] = image_config
+        generation_config["imageConfig"] = image_config
 
     if model == "gemini-3.1-flash-image-preview":
         thinking_config = {
-            "thinking_level": thinking_level,
-            "include_thoughts": False
+            "thinkingLevel": thinking_level,
+            "includeThoughts": False
         }
-        generation_config["thinking_config"] = thinking_config
+        generation_config["thinkingConfig"] = thinking_config
 
     body = {
         "contents": [

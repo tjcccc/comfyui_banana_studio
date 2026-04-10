@@ -78,6 +78,13 @@ class BananaStudio:
 
     CATEGORY = "Banana Studio"
 
+    @classmethod
+    def IS_CHANGED(cls, seed, **kwargs):
+        # Always re-execute when seed is random; otherwise let ComfyUI cache normally.
+        if seed is None or seed < 0:
+            return float("NaN")
+        return seed
+
 
     @staticmethod
     def has_no_prompt_and_images(prompt: str, *images: Optional[torch.Tensor]) -> bool:
@@ -111,7 +118,7 @@ class BananaStudio:
         base64_images, text_output = parse_gemini_response(response_json)
 
         if not base64_images:
-            return None, f"No images returned from model {model}. Text output: \n{text_output}"
+            raise ValueError(f"[BananaStudio] No images returned from {model} (likely blocked by safety policy). Response:\n{text_output}")
 
         image_tensors = [get_image_from_base64_to_tensor(base64_image) for base64_image in base64_images]
 
@@ -137,9 +144,9 @@ class BananaStudio:
         image_5: Optional[torch.Tensor] = None,
         image_6: Optional[torch.Tensor] = None,
         proxy: Optional[str] = None,
-    ) -> Tuple[Optional[torch.Tensor], str] | None:
+    ) -> Tuple[torch.Tensor, str]:
         if self.has_no_prompt_and_images(prompt, image_1, image_2, image_3, image_4, image_5, image_6):
-            return None, "No prompt and images for generating."
+            raise ValueError("[BananaStudio] No prompt or images provided.")
         if batch_size == 1:
             return self.generate_single_image(api_key, model, prompt, aspect_ratio, resolution, temperature, top_p, thinking_level, seed, image_1, image_2, image_3, image_4, image_5, image_6, proxy)
 
@@ -153,12 +160,15 @@ class BananaStudio:
 
         for i in range(batch_size):
             current_seed = base_seed + i
-            image_tensor, log_text = self.generate_single_image(api_key, model, prompt, aspect_ratio, resolution, temperature, top_p, thinking_level, current_seed, image_1, image_2, image_3, image_4, image_5, image_6, proxy)
-            last_log = log_text
-            all_images.append(image_tensor)
+            try:
+                image_tensor, log_text = self.generate_single_image(api_key, model, prompt, aspect_ratio, resolution, temperature, top_p, thinking_level, current_seed, image_1, image_2, image_3, image_4, image_5, image_6, proxy)
+                all_images.append(image_tensor)
+                last_log = log_text
+            except Exception as e:
+                print(f"[BananaStudio] Batch item {i + 1}/{batch_size} failed: {e}")
 
         if not all_images:
-            return None, "Failed to generate any images. Last response:\n{last_log}}"
+            raise ValueError(f"[BananaStudio] All {batch_size} batch requests returned no images. Last response:\n{last_log}")
 
         batched_images = torch.cat(all_images, dim=0)
 
