@@ -1,8 +1,14 @@
+import configparser
 import random
+from pathlib import Path
 from typing import Tuple, Optional
 import torch
 from .image_service import prepare_images_for_api, get_image_from_base64_to_tensor
 from .gemini_service import send_request_to_gemini, parse_gemini_response
+
+
+CONFIG_FILE_PATH = Path(__file__).resolve().parent / "config.ini"
+
 
 class BananaStudio:
 
@@ -94,6 +100,42 @@ class BananaStudio:
         return all(image is None for image in images)
 
 
+    @staticmethod
+    def get_api_key_from_config() -> str:
+        if not CONFIG_FILE_PATH.exists():
+            return ""
+
+        parser = configparser.ConfigParser()
+        parser.read(CONFIG_FILE_PATH, encoding="utf-8")
+
+        default_key = parser.defaults().get("gemini_api_key", "").strip()
+        if default_key:
+            return default_key
+
+        for section in parser.sections():
+            api_key = parser.get(section, "GEMINI_API_KEY", fallback="").strip()
+            if api_key:
+                return api_key
+
+        return ""
+
+
+    @classmethod
+    def resolve_api_key(cls, api_key: str) -> str:
+        config_api_key = cls.get_api_key_from_config()
+        if config_api_key:
+            return config_api_key
+
+        node_api_key = (api_key or "").strip()
+        if node_api_key:
+            return node_api_key
+
+        raise ValueError(
+            "[BananaStudio] Gemini API key is missing. Add GEMINI_API_KEY to config.ini "
+            "or enter it in the node input."
+        )
+
+
     def generate_single_image(
         self,
         api_key = "",
@@ -113,8 +155,9 @@ class BananaStudio:
         image_6: Optional[torch.Tensor] = None,
         proxy: Optional[str] = None,
     ) -> Tuple[Optional[torch.Tensor], str]:
+        resolved_api_key = self.resolve_api_key(api_key)
         encoded_inline_images = prepare_images_for_api(image_1, image_2, image_3, image_4, image_5, image_6)
-        response_json = send_request_to_gemini(api_key, model, prompt, encoded_inline_images, aspect_ratio, resolution, temperature, top_p, thinking_level, seed, proxy)
+        response_json = send_request_to_gemini(resolved_api_key, model, prompt, encoded_inline_images, aspect_ratio, resolution, temperature, top_p, thinking_level, seed, proxy)
         base64_images, text_output = parse_gemini_response(response_json)
 
         if not base64_images:
@@ -178,4 +221,3 @@ class BananaStudio:
         )
 
         return batched_images, final_log
-

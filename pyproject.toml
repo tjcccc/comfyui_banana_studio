@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "comfyui_banana_studio"
-version = "0.0.1"
+version = "0.6.0"
 description = "Use Nano Banana with Google API in ComfyUI."
 authors = [
   {name = "comfyui-banana-studio", email = "tttjjjccc@gmail.com"}
