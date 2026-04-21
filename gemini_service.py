@@ -218,5 +218,3 @@ def parse_gemini_response(response_json):
 
     formatted_texts = "\n".join(lines)
     return images, formatted_texts
-
-

@@ -5,12 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "comfyui_banana_studio"
 version = "0.6.0"
-description = "Use Nano Banana with Google API in ComfyUI."
+description = "Gemini image generation and prompt utility nodes for ComfyUI."
 authors = [
   {name = "comfyui-banana-studio", email = "tttjjjccc@gmail.com"}
 ]
 readme = "README.md"
-license = {text = "GNU General Public License v3"}
+license = {file = "LICENSE"}
 requires-python = ">=3.10"
 classifiers = []
 dependencies = [
@@ -39,9 +39,10 @@ Documentation = "https://github.com/tjcccc/comfyui_banana_studio/wiki"
 PublisherId = "tjcccc"
 DisplayName = "Banana Studio"
 Icon = ""
-Tags = []
+Banner = ""
+Tags = ["gemini", "image-generation", "prompt-tools"]
 Repository = "https://github.com/tjcccc/comfyui_banana_studio"
-includes = ["dist/"]
+requires-comfyui = ">=0.19.3"
 
 [tool.setuptools.package-data]
 "*" = ["*.*"]
