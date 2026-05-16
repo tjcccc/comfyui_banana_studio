@@ -10,6 +10,7 @@ Banana Studio is a ComfyUI custom node pack centered on Gemini image generation 
 - `Prompt Editor`: expand prompt variables and strip inline comments
 - `String Concat`: join strings with an optional separator
 - `Single Parameter Dispatcher`: emit per-batch values for parameter sweeps
+- `Save Audio + (MP3)`: save generated audio as MP3 with `%date:...%` filename formatting
 
 ## Installation
 
@@ -203,6 +204,13 @@ Good fit:
 - varying guidance-like numeric inputs across queued runs
 - generating per-image labels for save paths or metadata
 - simple sweep workflows without a larger parameter system
+
+### `Save Audio + (MP3)`
+
+Use this like ComfyUI's built-in `Save Audio (MP3)` node when you want date-formatted audio output paths.
+
+- `filename_prefix` supports custom date tokens such as `%date:yyyy-MM-dd%`, `%date:yyyyMMdd-HHmmss%`, and `%date:yyyy/MM/dd/ComfyUI%`.
+- `quality` matches the built-in MP3 options: `V0`, `128k`, and `320k`.
 
 ## Notes
 
