@@ -9,7 +9,7 @@ from .string_concat import StringConcat
 from .banana_prompt import BananaPrompt
 from .zimage_prompt import ZImagePrompt
 from .prompt_editor import PromptEditor
-from .save_things import SaveAudioMP3Plus
+from .format_path import FormatPath
 
 
 NODE_CLASS_MAPPINGS = {
@@ -19,7 +19,7 @@ NODE_CLASS_MAPPINGS = {
     "BananaPrompt": BananaPrompt,
     "ZImagePrompt": ZImagePrompt,
     "PromptEditor": PromptEditor,
-    "SaveAudioMP3Plus": SaveAudioMP3Plus,
+    "FormatPath": FormatPath,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
     "BananaStudio": "Banana Studio",
@@ -28,7 +28,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "BananaPrompt": "Banana Prompt",
     "ZImagePrompt": "Z-Image Prompt",
     "PromptEditor": "Prompt Editor",
-    "SaveAudioMP3Plus": "Save Audio + (MP3)",
+    "FormatPath": "Format Path",
 }
 WEB_DIRECTORY = "./js"
 __all__ = [

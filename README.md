@@ -10,7 +10,7 @@ Banana Studio is a ComfyUI custom node pack centered on Gemini image generation 
 - `Prompt Editor`: expand prompt variables and strip inline comments
 - `String Concat`: join strings with an optional separator
 - `Single Parameter Dispatcher`: emit per-batch values for parameter sweeps
-- `Save Audio + (MP3)`: save generated audio as MP3 with `%date:...%` filename formatting
+- `Format Path`: expand path templates with `%date:...%` formatting for downstream save nodes
 
 ## Installation
 
@@ -205,12 +205,16 @@ Good fit:
 - generating per-image labels for save paths or metadata
 - simple sweep workflows without a larger parameter system
 
-### `Save Audio + (MP3)`
+### `Format Path`
 
-Use this like ComfyUI's built-in `Save Audio (MP3)` node when you want date-formatted audio output paths.
+Use this when a downstream save node accepts a path or filename-prefix string and you want the path to be generated from a reusable template.
 
-- `filename_prefix` supports custom date tokens such as `%date:yyyy-MM-dd%`, `%date:yyyyMMdd-HHmmss%`, and `%date:yyyy/MM/dd/ComfyUI%`.
-- `quality` matches the built-in MP3 options: `V0`, `128k`, and `320k`.
+- `path_template` supports custom date tokens such as `%date:yyyy-MM-dd%`, `%date:yyyyMMdd-HHmmss%`, and `%date:yyyy/MM/dd/ComfyUI%`.
+- Connect `formatted_path` to any save node input that accepts a `STRING` path or filename prefix.
+
+Output:
+
+- `formatted_path`: the formatted path string
 
 ## Notes
 
@@ -223,7 +227,7 @@ Use this like ComfyUI's built-in `Save Audio (MP3)` node when you want date-form
 Relevant local validation for this repository:
 
 ```bash
-python3 -m py_compile banana_studio.py gemini_service.py __init__.py
+python3 -m py_compile banana_studio.py gemini_service.py path_format.py format_path.py __init__.py
 ```
 
 ## Publish
@@ -245,4 +249,4 @@ This repository also includes [publish_action.yml](./.github/workflows/publish_a
 
 ## Version
 
-Current project version: `0.6.0`
+Current project version: `0.7.0`
